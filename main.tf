@@ -38,11 +38,6 @@ resource "aws_lb_target_group" "meu_tg" {
   protocol    = "HTTP"
   target_type = "ip" # Obrigatório para Fargate
   vpc_id      = data.aws_vpc.default.id
-
-  # Opcional: Verifica se o container está vivo
-  health_check {
-    path = "/ator" # Uma rota que existe no seu back
-  }
 }
 
 resource "aws_lb_listener" "front_end" {
@@ -140,7 +135,6 @@ resource "aws_ecs_task_definition" "app_task" {
         { containerPort = 8080, hostPort = 8080 }
       ]
       environment = [
-        # MUDANÇA CRÍTICA: 'db' vira '127.0.0.1' pois compartilham a rede na Task
         { name = "SPRING_DATASOURCE_URL", value = "jdbc:postgresql://127.0.0.1:5432/plocadora" },
         { name = "SPRING_DATASOURCE_USERNAME", value = "plocadora_user" },
         { name = "SPRING_DATASOURCE_PASSWORD", value = "plocadora_pass" },
@@ -152,16 +146,6 @@ resource "aws_ecs_task_definition" "app_task" {
       dependsOn = [
         { containerName = "locadora-db", condition = "START" }
       ]
-      # Logs para ajudar a debugar o Spring
-      # logConfiguration = {
-      #   logDriver = "awslogs"
-      #   options = {
-      #     "awslogs-group"         = "/ecs/locadora-app"
-      #     "awslogs-region"        = "us-east-1"
-      #     "awslogs-create-group"  = "true"
-      #     "awslogs-stream-prefix" = "backend"
-      #   }
-      # }
     },
 
     # ---------------------------------------------------------
